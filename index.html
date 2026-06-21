@@ -61,6 +61,7 @@ td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); font-size:
 <button class="tab" data-view="deploy"><i class="ri ri-cloud-line"></i> 部署架构</button>
 <button class="tab" data-view="function"><i class="ri ri-list-check"></i> 功能架构</button>
 <button class="tab" data-view="subproduct"><i class="ri ri-puzzle-line"></i> 子产品拆分</button>
+<button class="tab" data-view="repo"><i class="ri ri-folder-open-line"></i> 仓库目录</button>
 </div>
 
 <!-- ========== 总体架构 ========== -->
@@ -466,6 +467,148 @@ td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); font-size:
 </div>
 
 </div>
+
+<!-- ========== 仓库目录 ========== -->
+<div id="repo" class="view-panel">
+<h2 style="font-size:1.4rem;color:var(--text);margin-bottom:20px"><i class="ri ri-folder-open-line" style="color:var(--accent-blue)"></i> 仓库目录 · Monorepo 规范</h2>
+
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px">
+<h3 style="font-size:1rem;color:var(--text);margin-bottom:16px"><i class="ri ri-git-repository-line" style="color:var(--accent-green)"></i> 根目录结构</h3>
+<div style="background:var(--bg);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;line-height:1.8;color:var(--text-secondary)">
+<pre style="white-space:pre-wrap">
+agentforge/                          <span style="color:var(--text-muted)"># 根仓库</span>
+├── ai-lcap-Server/                  <span style="color:var(--text-muted)"># 低代码平台 · 后端（Python）</span>
+├── ai-lcap-web/                     <span style="color:var(--text-muted)"># 低代码平台 · 前端（Vue3）</span>
+├── ai-arp-Server/                   <span style="color:var(--text-muted)"># 运行平台 · 后端（Java）</span>
+├── ai-arp-web/                      <span style="color:var(--text-muted)"># 运行平台 · 前端（Vue3）</span>
+├── ai-aep-Server/                   <span style="color:var(--text-muted)"># 评测平台 · 后端（Java）</span>
+├── ai-aep-web/                      <span style="color:var(--text-muted)"># 评测平台 · 前端（Vue3）</span>
+├── ai-aeco-Server/                  <span style="color:var(--text-muted)"># 生态平台 · 后端（Java）</span>
+├── ai-aeco-web/                     <span style="color:var(--text-muted)"># 生态平台 · 前端（Vue3）</span>
+├── shared/                          <span style="color:var(--text-muted)"># 共享资源</span>
+│   ├── proto/                       <span style="color:var(--text-muted)"># gRPC / Protobuf 定义</span>
+│   ├── common-libs/                 <span style="color:var(--text-muted)"># 公共工具库</span>
+│   └── docker/                      <span style="color:var(--text-muted)"># 公共 Dockerfile 模板</span>
+├── deploy/                          <span style="color:var(--text-muted)"># 部署配置</span>
+│   ├── helm/                        <span style="color:var(--text-muted)"># Helm Charts</span>
+│   ├── docker-compose/              <span style="color:var(--text-muted)"># 本地开发编排</span>
+│   └── k8s/                         <span style="color:var(--text-muted)"># K8s YAML</span>
+├── docs/                            <span style="color:var(--text-muted)"># 项目文档</span>
+├── scripts/                         <span style="color:var(--text-muted)"># CI/CD 脚本</span>
+├── .github/                         <span style="color:var(--text-muted)"># GitHub Actions</span>
+├── Makefile                         <span style="color:var(--text-muted)"># 根级构建入口</span>
+└── README.md
+</pre>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+<!-- Java 后端 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+<h3 style="font-size:1rem;color:var(--accent-orange);margin-bottom:12px"><i class="ri ri-server-line"></i> Java 后端 · Spring Cloud 多模块</h3>
+<p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:12px">ai-arp-Server / ai-aep-Server / ai-aeco-Server</p>
+<div style="background:var(--bg);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;line-height:1.8;color:var(--text-secondary)">
+<pre style="white-space:pre-wrap">
+ai-arp-Server/
+├── pom.xml                          <span style="color:var(--text-muted)"># 父 POM</span>
+├── ai-arp-api/                      <span style="color:var(--accent-blue)"># API 定义（DTO/VO/枚举）</span>
+├── ai-arp-service/                  <span style="color:var(--accent-green)"># 业务实现</span>
+│   └── src/main/java/com/agentforge/arp/
+│       ├── controller/              <span style="color:var(--text-muted)"># REST 控制器</span>
+│       ├── service/impl/            <span style="color:var(--text-muted)"># 业务逻辑</span>
+│       ├── manager/                 <span style="color:var(--text-muted)"># 可复用业务层</span>
+│       ├── mapper/                  <span style="color:var(--text-muted)"># MyBatis Mapper</span>
+│       ├── entity/                  <span style="color:var(--text-muted)"># 数据库实体</span>
+│       ├── config/                  <span style="color:var(--text-muted)"># 配置类</span>
+│       ├── listener/                <span style="color:var(--text-muted)"># Kafka 监听</span>
+│       └── exception/               <span style="color:var(--text-muted)"># 异常处理</span>
+├── ai-arp-common/                   <span style="color:var(--accent-purple)"># 公共模块</span>
+└── README.md
+</pre>
+</div>
+</div>
+
+<!-- Python 后端 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+<h3 style="font-size:1rem;color:var(--accent-blue);margin-bottom:12px"><i class="ri ri-server-line"></i> Python 后端 · FastAPI 分层</h3>
+<p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:12px">ai-lcap-Server</p>
+<div style="background:var(--bg);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;line-height:1.8;color:var(--text-secondary)">
+<pre style="white-space:pre-wrap">
+ai-lcap-Server/
+├── pyproject.toml                   <span style="color:var(--text-muted)"># 项目配置</span>
+├── alembic/                         <span style="color:var(--text-muted)"># 数据库迁移</span>
+├── app/
+│   ├── main.py                      <span style="color:var(--accent-blue)"># FastAPI 入口</span>
+│   ├── core/                        <span style="color:var(--text-muted)"># 配置/安全/依赖注入</span>
+│   ├── api/v1/endpoints/            <span style="color:var(--accent-green)"># API 路由层</span>
+│   ├── schemas/                     <span style="color:var(--accent-orange)"># Pydantic 模型</span>
+│   ├── services/                    <span style="color:var(--accent-green)"># 业务逻辑层</span>
+│   ├── models/                      <span style="color:var(--accent-purple)"># SQLAlchemy ORM</span>
+│   ├── repositories/                <span style="color:var(--accent-purple)"># 数据访问层</span>
+│   ├── infrastructure/              <span style="color:var(--text-muted)"># DB/Redis/Kafka/MinIO</span>
+│   └── tasks/                       <span style="color:var(--text-muted)"># 后台任务</span>
+├── tests/                           <span style="color:var(--text-muted)"># 单元/集成/E2E</span>
+└── Dockerfile
+</pre>
+</div>
+</div>
+</div>
+
+<!-- 前端 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px">
+<h3 style="font-size:1rem;color:var(--accent-purple);margin-bottom:12px"><i class="ri ri-window-line"></i> 前端工程 · Vue 3 + TypeScript + Vite</h3>
+<p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:12px">ai-lcap-web / ai-arp-web / ai-aep-web / ai-aeco-web（四个前端结构统一）</p>
+<div style="background:var(--bg);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;line-height:1.8;color:var(--text-secondary)">
+<pre style="white-space:pre-wrap">
+ai-arp-web/
+├── package.json / tsconfig.json / vite.config.ts
+├── src/
+│   ├── main.ts                      <span style="color:var(--accent-blue)"># 入口</span>
+│   ├── router/modules/              <span style="color:var(--accent-green)"># 路由（按模块拆分）</span>
+│   ├── stores/                      <span style="color:var(--accent-orange)"># Pinia 状态管理</span>
+│   ├── api/                         <span style="color:var(--accent-green)"># API 请求层 + 类型定义</span>
+│   ├── views/                       <span style="color:var(--accent-purple)"># 页面视图</span>
+│   │   ├── dashboard/
+│   │   ├── agent/
+│   │   ├── flow/
+│   │   └── settings/
+│   ├── components/                  <span style="color:var(--text-muted)"># 公共组件（layout/common/business）</span>
+│   ├── composables/                 <span style="color:var(--text-muted)"># 组合式函数（Hooks）</span>
+│   ├── styles/                      <span style="color:var(--text-muted)"># 全局样式</span>
+│   ├── utils/                       <span style="color:var(--text-muted)"># 工具函数</span>
+│   └── types/                       <span style="color:var(--text-muted)"># 全局类型</span>
+├── Dockerfile
+└── README.md
+</pre>
+</div>
+</div>
+
+<!-- 命名规范汇总表 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px">
+<h3 style="font-size:1rem;color:var(--text);margin-bottom:16px"><i class="ri ri-table-line" style="color:var(--accent-blue)"></i> 命名规范汇总</h3>
+<table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+<thead>
+<tr style="border-bottom:1px solid var(--border)">
+<th style="padding:10px;text-align:left;color:var(--text-muted)">维度</th>
+<th style="padding:10px;text-align:left;color:var(--text-muted)">规范</th>
+<th style="padding:10px;text-align:left;color:var(--text-muted)">示例</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">仓库名</td><td style="padding:8px"><code>ai-{缩写}-Server</code> / <code>ai-{缩写}-web</code></td><td style="padding:8px;color:var(--text-secondary)">ai-arp-Server</td></tr>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">Java 包名</td><td style="padding:8px"><code>com.agentforge.{缩写}.{模块}</code></td><td style="padding:8px;color:var(--text-secondary)">com.agentforge.arp.service</td></tr>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">Python 包名</td><td style="padding:8px"><code>app.{模块}</code></td><td style="padding:8px;color:var(--text-secondary)">app.services.agent_service</td></tr>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">npm 包名</td><td style="padding:8px"><code>@agentforge/{缩写}-web</code></td><td style="padding:8px;color:var(--text-secondary)">@agentforge/arp-web</td></tr>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">Docker 镜像</td><td style="padding:8px"><code>agentforge/{工程名}:{版本}</code></td><td style="padding:8px;color:var(--text-secondary)">agentforge/ai-arp-server:v1.0.0</td></tr>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">数据库名</td><td style="padding:8px"><code>agentforge_{缩写}</code></td><td style="padding:8px;color:var(--text-secondary)">agentforge_arp</td></tr>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">K8s 命名空间</td><td style="padding:8px"><code>agentforge-{缩写}</code></td><td style="padding:8px;color:var(--text-secondary)">agentforge-arp</td></tr>
+<tr style="border-bottom:1px solid var(--border-soft)"><td style="padding:8px">Redis 前缀</td><td style="padding:8px"><code>af:{缩写}:</code></td><td style="padding:8px;color:var(--text-secondary)">af:arp:session:</td></tr>
+<tr><td style="padding:8px">Kafka Topic</td><td style="padding:8px"><code>af.{缩写}.{事件}</code></td><td style="padding:8px;color:var(--text-secondary)">af.arp.agent.created</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
 <script>
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
