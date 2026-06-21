@@ -3,551 +3,478 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgentForge 智能体中台 · 架构设计</title>
+<title>AgentForge 智能体中台 · 架构设计文档</title>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--dim:#8b949e;--blue:#58a6ff;--green:#3fb950;--orange:#f0883e;--purple:#bc8cff;--pink:#f778ba;--red:#f85149;--cyan:#39d2c0}
-body{font-family:'Inter','Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
-.header{background:rgba(13,17,23,.95);backdrop-filter:blur(12px);padding:20px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
-.header h1{font-size:22px;font-weight:700;margin-bottom:4px}
-.header .sub{font-size:13px;color:var(--dim)}
-.tabs{display:flex;gap:4px;padding:0 32px;background:var(--card);border-bottom:1px solid var(--border)}
-.tab{padding:12px 20px;cursor:pointer;font-size:14px;color:var(--dim);border-bottom:2px solid transparent;transition:.2s}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-.section{display:none;padding:32px;max-width:1400px;margin:0 auto;animation:fadeIn .3s}
-.section.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-h2{font-size:20px;font-weight:600;margin-bottom:8px}
-h3{font-size:16px;font-weight:600;margin:20px 0 10px;color:var(--blue)}
-.desc{color:var(--dim);font-size:14px;margin-bottom:24px;max-width:800px}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
-.card h4{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.card h4 .badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
-.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px}
-@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
-th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
-th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
-td{color:var(--text)}
-.tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:500}
-.tag-blue{background:rgba(88,166,255,.15);color:var(--blue)}
-.tag-green{background:rgba(63,185,80,.15);color:var(--green)}
-.tag-orange{background:rgba(240,136,62,.15);color:var(--orange)}
-.tag-purple{background:rgba(188,140,255,.15);color:var(--purple)}
-.tag-pink{background:rgba(247,120,186,.15);color:var(--pink)}
-.tag-cyan{background:rgba(57,210,192,.15);color:var(--cyan)}
-.svg-wrap{overflow-x:auto;margin:20px 0}
-svg text{font-family:'Inter','Noto Sans SC',sans-serif}
-ul{padding-left:20px;margin:8px 0}
-li{margin:4px 0;font-size:13px;color:var(--dim)}
-li strong{color:var(--text)}
-.note{background:rgba(88,166,255,.08);border-left:3px solid var(--blue);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:13px;color:var(--dim)}
-.product-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
-.product-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.product-card.dev::before{background:var(--blue)}
-.product-card.run::before{background:var(--green)}
-.product-card.eval::before{background:var(--orange)}
-.product-card.eco::before{background:var(--purple)}
-.product-card.full::before{background:linear-gradient(90deg,var(--blue),var(--green),var(--orange),var(--purple))}
-.price{font-size:12px;color:var(--dim);margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+:root {
+    --bg: #0d1117;
+    --bg-secondary: #161b22;
+    --card: #161b22;
+    --border: #21262d;
+    --border-soft: #21262d66;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+    --accent-blue: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-purple: #8b5cf6;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.header { padding: 32px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.header h1 { font-size: 1.8rem; display: flex; align-items: center; gap: 12px; }
+.header h1 i { color: var(--accent-blue); }
+.header p { color: var(--text-secondary); margin-top: 8px; font-size: 0.95rem; }
+.tabs { display: flex; gap: 4px; padding: 8px; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px; overflow-x: auto; }
+.tab { padding: 10px 20px; border-radius: 8px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem; white-space: nowrap; transition: all 0.2s; border: none; background: none; }
+.tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.tab.active { background: var(--accent-blue); color: #fff; }
+.view-panel { display: none; }
+.view-panel.active { display: block; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.layer-label { font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+.tech-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border-soft); border-radius: 8px; }
+.tech-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+.tech-name { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+.tech-desc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+code { background: rgba(0,194,255,0.1); padding: 2px 6px; border-radius: 4px; color: var(--accent-blue); font-size: 0.85rem; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 10px 12px; text-align: left; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); font-size: 0.9rem; }
+@media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
+<div class="container">
 <div class="header">
-  <h1>⚡ AgentForge 智能体中台</h1>
-  <div class="sub">架构设计文档 v1.0 · 总体架构 / 技术架构 / 部署架构 / 功能架构 · SaaS 整体 + 子产品独立</div>
+<h1><i class="ri ri-brain-line"></i> AgentForge 智能体中台 · 架构设计文档</h1>
+<p>统一 AI Agent 开发、运行、评测、生态的一站式企业级中台方案 — 多视图版本</p>
 </div>
-<div class="tabs" id="tabs">
-  <div class="tab active" onclick="show(0)">📐 总体架构</div>
-  <div class="tab" onclick="show(1)">🔧 技术架构</div>
-  <div class="tab" onclick="show(2)">☁️ 部署架构</div>
-  <div class="tab" onclick="show(3)">📋 功能架构</div>
-  <div class="tab" onclick="show(4)">📦 子产品拆分</div>
-</div>
-
-<!-- ==================== 1. 总体架构 ==================== -->
-<div class="section active" id="s0">
-  <h2>总体架构</h2>
-  <p class="desc">AgentForge 采用「中台 + 子产品」双模式设计：SaaS 模式提供完整中台能力，同时每个能力域可作为独立子产品单独交付。</p>
-
-  <div class="svg-wrap">
-    <svg viewBox="0 0 1200 720" width="100%" style="max-width:1200px">
-      <defs>
-        <marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#30363d"/></marker>
-        <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <!-- 接入层 -->
-      <rect x="40" y="20" width="1120" height="70" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
-      <text x="60" y="46" fill="#58a6ff" font-size="13" font-weight="600">接入层 Access Layer</text>
-      <rect x="60" y="52" width="100" height="28" rx="6" fill="#21262d"/><text x="110" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">API Gateway</text>
-      <rect x="180" y="52" width="80" height="28" rx="6" fill="#21262d"/><text x="220" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">SDK</text>
-      <rect x="280" y="52" width="100" height="28" rx="6" fill="#21262d"/><text x="330" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">Web Console</text>
-      <rect x="400" y="52" width="70" height="28" rx="6" fill="#21262d"/><text x="435" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">CLI</text>
-      <rect x="490" y="52" width="80" height="28" rx="6" fill="#21262d"/><text x="530" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">Webhook</text>
-      <rect x="590" y="52" width="140" height="28" rx="6" fill="#21262d"/><text x="660" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">企业集成(飞书/钉钉)</text>
-      <rect x="750" y="52" width="100" height="28" rx="6" fill="#21262d"/><text x="800" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">MCP Server</text>
-      <rect x="870" y="52" width="100" height="28" rx="6" fill="#21262d"/><text x="920" y="70" fill="#e6edf3" font-size="11" text-anchor="middle">A2A Protocol</text>
-
-      <!-- 能力层 -->
-      <rect x="40" y="110" width="1120" height="340" rx="12" fill="none" stroke="#30363d" stroke-width="1" stroke-dasharray="6,3"/>
-      <text x="60" y="132" fill="#8b949e" font-size="12" font-weight="600">能力层 Capability Layer</text>
-
-      <!-- 开发面 -->
-      <rect x="60" y="145" width="260" height="290" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
-      <text x="80" y="170" fill="#58a6ff" font-size="13" font-weight="600">🛠 智能体开发面</text>
-      <text x="80" y="170" fill="#58a6ff" font-size="10" font-weight="400" dx="160">AgentDev Studio</text>
-      <rect x="80" y="185" width="110" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="135" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">低代码编排器</text>
-      <rect x="200" y="185" width="100" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="250" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">高代码SDK</text>
-      <rect x="80" y="230" width="110" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="135" y="252" fill="#e6edf3" font-size="11" text-anchor="middle">Harness工程</text>
-      <rect x="200" y="230" width="100" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="250" y="252" fill="#e6edf3" font-size="11" text-anchor="middle">意图识别</text>
-      <rect x="80" y="275" width="220" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="190" y="297" fill="#e6edf3" font-size="11" text-anchor="middle">记忆管理 (短期/长期/工作)</text>
-      <rect x="80" y="320" width="220" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="190" y="342" fill="#e6edf3" font-size="11" text-anchor="middle">知识库 RAG Pipeline</text>
-      <rect x="80" y="365" width="220" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="190" y="387" fill="#e6edf3" font-size="11" text-anchor="middle">工作流引擎 DAG</text>
-
-      <!-- 运行面 -->
-      <rect x="340" y="145" width="260" height="290" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
-      <text x="360" y="170" fill="#3fb950" font-size="13" font-weight="600">⚙️ 智能体运行面</text>
-      <text x="360" y="170" fill="#3fb950" font-size="10" font-weight="400" dx="155">AgentRuntime</text>
-      <rect x="360" y="185" width="110" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="415" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">Agent Registry</text>
-      <rect x="480" y="185" width="100" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="530" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">服务发现</text>
-      <rect x="360" y="230" width="110" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="415" y="252" fill="#e6edf3" font-size="11" text-anchor="middle">路由/负载均衡</text>
-      <rect x="480" y="230" width="100" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="530" y="252" fill="#e6edf3" font-size="11" text-anchor="middle">会话管理</text>
-      <rect x="360" y="275" width="220" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="470" y="297" fill="#e6edf3" font-size="11" text-anchor="middle">沙箱 (代码执行/工具隔离)</text>
-      <rect x="360" y="320" width="220" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="470" y="342" fill="#e6edf3" font-size="11" text-anchor="middle">Guardrails (安全/合规)</text>
-      <rect x="360" y="365" width="110" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="415" y="387" fill="#e6edf3" font-size="11" text-anchor="middle">工具编排</text>
-      <rect x="480" y="365" width="100" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="530" y="387" fill="#e6edf3" font-size="11" text-anchor="middle">多Agent协作</text>
-
-      <!-- 评测面 -->
-      <rect x="620" y="145" width="250" height="290" rx="10" fill="#161b22" stroke="#f0883e" stroke-width="1.5"/>
-      <text x="640" y="170" fill="#f0883e" font-size="13" font-weight="600">📊 智能体评测面</text>
-      <text x="640" y="170" fill="#f0883e" font-size="10" font-weight="400" dx="145">AgentEval</text>
-      <rect x="640" y="185" width="100" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="690" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">Benchmark</text>
-      <rect x="750" y="185" width="100" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="800" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">A/B Testing</text>
-      <rect x="640" y="230" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="745" y="252" fill="#e6edf3" font-size="11" text-anchor="middle">质量监控 (实时指标/异常检测)</text>
-      <rect x="640" y="275" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="745" y="297" fill="#e6edf3" font-size="11" text-anchor="middle">人工评测 (标注/一致性/Gold Std)</text>
-      <rect x="640" y="320" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="745" y="342" fill="#e6edf3" font-size="11" text-anchor="middle">回归测试 (版本对比/回滚)</text>
-      <rect x="640" y="365" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="745" y="387" fill="#e6edf3" font-size="11" text-anchor="middle">评测报告 Dashboard</text>
-
-      <!-- 生态面 -->
-      <rect x="890" y="145" width="250" height="290" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
-      <text x="910" y="170" fill="#bc8cff" font-size="13" font-weight="600">🌐 智能体生态面</text>
-      <text x="910" y="170" fill="#bc8cff" font-size="10" font-weight="400" dx="145">AgentEco</text>
-      <rect x="910" y="185" width="105" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="962" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">Skill Store</text>
-      <rect x="1025" y="185" width="95" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="1072" y="207" fill="#e6edf3" font-size="11" text-anchor="middle">插件管理</text>
-      <rect x="910" y="230" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="1015" y="252" fill="#e6edf3" font-size="11" text-anchor="middle">模板市场 (Agent/Workflow)</text>
-      <rect x="910" y="275" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="1015" y="297" fill="#e6edf3" font-size="11" text-anchor="middle">开发者门户 (API Doc/SDK)</text>
-      <rect x="910" y="320" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="1015" y="342" fill="#e6edf3" font-size="11" text-anchor="middle">社区 (论坛/知识库/案例)</text>
-      <rect x="910" y="365" width="210" height="36" rx="6" fill="#21262d" stroke="#30363d"/><text x="1015" y="387" fill="#e6edf3" font-size="11" text-anchor="middle">行业解决方案</text>
-
-      <!-- 基础设施层 -->
-      <rect x="40" y="470" width="1120" height="100" rx="12" fill="#161b22" stroke="#f0883e" stroke-width="1.5"/>
-      <text x="60" y="496" fill="#f0883e" font-size="13" font-weight="600">基础设施层 Infrastructure Layer</text>
-      <rect x="60" y="510" width="160" height="46" rx="6" fill="#21262d" stroke="#30363d"/><text x="140" y="530" fill="#e6edf3" font-size="11" text-anchor="middle">LLM Gateway</text><text x="140" y="545" fill="#8b949e" font-size="9" text-anchor="middle">多模型路由 · Fallback · 限流</text>
-      <rect x="240" y="510" width="140" height="46" rx="6" fill="#21262d" stroke="#30363d"/><text x="310" y="530" fill="#e6edf3" font-size="11" text-anchor="middle">Vector DB</text><text x="310" y="545" fill="#8b949e" font-size="9" text-anchor="middle">Milvus / Qdrant</text>
-      <rect x="400" y="510" width="140" height="46" rx="6" fill="#21262d" stroke="#30363d"/><text x="470" y="530" fill="#e6edf3" font-size="11" text-anchor="middle">Object Storage</text><text x="470" y="545" fill="#8b949e" font-size="9" text-anchor="middle">MinIO / S3</text>
-      <rect x="560" y="510" width="140" height="46" rx="6" fill="#21262d" stroke="#30363d"/><text x="630" y="530" fill="#e6edf3" font-size="11" text-anchor="middle">Message Queue</text><text x="630" y="545" fill="#8b949e" font-size="9" text-anchor="middle">Kafka / RabbitMQ</text>
-      <rect x="720" y="510" width="120" height="46" rx="6" fill="#21262d" stroke="#30363d"/><text x="780" y="530" fill="#e6edf3" font-size="11" text-anchor="middle">Cache</text><text x="780" y="545" fill="#8b949e" font-size="9" text-anchor="middle">Redis Cluster</text>
-      <rect x="860" y="510" width="140" height="46" rx="6" fill="#21262d" stroke="#30363d"/><text x="930" y="530" fill="#e6edf3" font-size="11" text-anchor="middle">Database</text><text x="930" y="545" fill="#8b949e" font-size="9" text-anchor="middle">PostgreSQL + pgvector</text>
-      <rect x="1020" y="510" width="120" height="46" rx="6" fill="#21262d" stroke="#30363d"/><text x="1080" y="530" fill="#e6edf3" font-size="11" text-anchor="middle">Search</text><text x="1080" y="545" fill="#8b949e" font-size="9" text-anchor="middle">Elasticsearch</text>
-
-      <!-- 底座层 -->
-      <rect x="40" y="590" width="1120" height="70" rx="12" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
-      <text x="60" y="616" fill="#3fb950" font-size="13" font-weight="600">底座层 Foundation Layer</text>
-      <rect x="60" y="628" width="120" height="24" rx="5" fill="#21262d"/><text x="120" y="644" fill="#e6edf3" font-size="10" text-anchor="middle">Kubernetes</text>
-      <rect x="200" y="628" width="180" height="24" rx="5" fill="#21262d"/><text x="290" y="644" fill="#e6edf3" font-size="10" text-anchor="middle">Observability (Prom+Grafana+ELK)</text>
-      <rect x="400" y="628" width="120" height="24" rx="5" fill="#21262d"/><text x="460" y="644" fill="#e6edf3" font-size="10" text-anchor="middle">Security/RBAC</text>
-      <rect x="540" y="628" width="120" height="24" rx="5" fill="#21262d"/><text x="600" y="644" fill="#e6edf3" font-size="10" text-anchor="middle">租户隔离</text>
-      <rect x="680" y="628" width="140" height="24" rx="5" fill="#21262d"/><text x="750" y="644" fill="#e6edf3" font-size="10" text-anchor="middle">CI/CD (GitOps/ArgoCD)</text>
-      <rect x="840" y="628" width="140" height="24" rx="5" fill="#21262d"/><text x="910" y="644" fill="#e6edf3" font-size="10" text-anchor="middle">多环境管理 (Dev/Prod)</text>
-
-      <!-- 连接线 -->
-      <line x1="600" y1="90" x2="600" y2="145" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>
-      <line x1="600" y1="435" x2="600" y2="470" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>
-      <line x1="600" y1="570" x2="600" y2="590" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>
-    </svg>
-  </div>
-
-  <div class="note">
-    <strong>核心设计原则：</strong>每个能力域（开发/运行/评测/生态）既可作为 SaaS 中台的一部分整体交付，也可作为独立子产品单独销售。子产品之间通过标准 API 和事件总线解耦。
-  </div>
-
-  <h3>SaaS 整体 vs 子产品独立 — 产品形态对比</h3>
-  <div class="grid2">
-    <div class="card">
-      <h4><span class="tag tag-blue">SaaS 整体</span> AgentForge Platform</h4>
-      <ul>
-        <li><strong>一站式平台</strong>：开发 + 运行 + 评测 + 生态全能力</li>
-        <li><strong>统一体验</strong>：一个控制台管理所有 Agent 生命周期</li>
-        <li><strong>数据打通</strong>：开发数据 → 运行指标 → 评测结果全链路</li>
-        <li><strong>计费</strong>：按用量统一计费（API 调用 + 计算 + 存储）</li>
-        <li><strong>适合</strong>：需要完整 Agent 能力的中大型团队</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h4><span class="tag tag-green">子产品独立</span> 按需购买</h4>
-      <ul>
-        <li><strong>灵活组合</strong>：只买需要的能力域</li>
-        <li><strong>独立交付</strong>：每个子产品有独立的入口和计费</li>
-        <li><strong>渐进式</strong>：先用开发平台，后续再加评测和生态</li>
-        <li><strong>计费</strong>：每个子产品独立计费</li>
-        <li><strong>适合</strong>：初创团队、单一需求场景、预算有限</li>
-      </ul>
-    </div>
-  </div>
+<div class="tabs">
+<button class="tab active" data-view="overview"><i class="ri ri-layout-line"></i> 总体架构</button>
+<button class="tab" data-view="tech"><i class="ri ri-settings-3-line"></i> 技术架构</button>
+<button class="tab" data-view="deploy"><i class="ri ri-cloud-line"></i> 部署架构</button>
+<button class="tab" data-view="function"><i class="ri ri-list-check"></i> 功能架构</button>
+<button class="tab" data-view="subproduct"><i class="ri ri-puzzle-line"></i> 子产品拆分</button>
 </div>
 
-<!-- ==================== 2. 技术架构 ==================== -->
-<div class="section" id="s1">
-  <h2>技术架构</h2>
-  <p class="desc">六层技术栈设计，从用户界面到基础设施，每层选择成熟可靠的技术方案。</p>
-
-  <div class="card">
-    <h4>技术栈选型</h4>
-    <table>
-      <tr><th>层次</th><th>组件</th><th>技术选型</th><th>选型理由</th></tr>
-      <tr><td rowspan="3">🖥 前端</td><td>Web Console</td><td>React 18 + TypeScript + Ant Design</td><td>企业级 UI 组件库，生态成熟</td></tr>
-      <tr><td>流程编排器</td><td>React Flow + Monaco Editor</td><td>可视化 DAG 编辑器 + 代码编辑器</td></tr>
-      <tr><td>评测 Dashboard</td><td>ECharts + Ant Design Charts</td><td>丰富的数据可视化组件</td></tr>
-      <tr><td rowspan="2">🔌 接入层</td><td>API Gateway</td><td>APISIX / Kong</td><td>高性能网关，插件生态丰富</td></tr>
-      <tr><td>协议适配</td><td>gRPC-Web + WebSocket</td><td>流式输出、实时通信</td></tr>
-      <tr><td rowspan="4">⚙️ 后端服务</td><td>核心服务</td><td>Go (Gin/gRPC)</td><td>高并发、低延迟、适合 Agent 运行时</td></tr>
-      <tr><td>编排引擎</td><td>Python (FastAPI)</td><td>AI/ML 生态丰富，LangChain 原生支持</td></tr>
-      <tr><td>评测服务</td><td>Python (FastAPI)</td><td>与 ML 框架无缝集成</td></tr>
-      <tr><td>生态服务</td><td>Go / Node.js</td><td>高吞吐、低资源占用</td></tr>
-      <tr><td rowspan="4">🤖 AI 层</td><td>LLM Gateway</td><td>LiteLLM + 自研路由</td><td>统一 100+ 模型 API，成本优化</td></tr>
-      <tr><td>Agent 框架</td><td>LangGraph + 自研 SDK</td><td>条件边、循环节点、状态管理</td></tr>
-      <tr><td>RAG 引擎</td><td>LlamaIndex + 自研 Pipeline</td><td>父子索引、混合检索、重排序</td></tr>
-      <tr><td>记忆引擎</td><td>自研 (Redis + Milvus + Summary)</td><td>短期/长期/工作记忆三层架构</td></tr>
-      <tr><td rowspan="4">💾 数据层</td><td>关系数据库</td><td>PostgreSQL 16 + pgvector</td><td>向量检索 + 关系查询一体化</td></tr>
-      <tr><td>向量数据库</td><td>Milvus 2.x / Qdrant</td><td>十亿级向量检索、多租户隔离</td></tr>
-      <tr><td>缓存</td><td>Redis 7 Cluster</td><td>会话状态、限流、热点缓存</td></tr>
-      <tr><td>消息队列</td><td>Kafka 3.x / RabbitMQ</td><td>Agent 间异步通信、事件驱动</td></tr>
-      <tr><td rowspan="3">🏗 基础设施</td><td>容器编排</td><td>Kubernetes 1.28+</td><td>弹性伸缩、多租户隔离</td></tr>
-      <tr><td>服务网格</td><td>Istio / Linkerd</td><td>流量管理、可观测性、安全</td></tr>
-      <tr><td>可观测性</td><td>Prometheus + Grafana + Loki</td><td>指标、日志、链路追踪</td></tr>
-    </table>
-  </div>
-
-  <div class="card">
-    <h4>LLM Gateway 核心设计</h4>
-    <div class="grid3">
-      <div>
-        <h5 style="color:var(--blue);font-size:13px;margin-bottom:8px">多模型路由</h5>
-        <ul>
-          <li>统一 API 适配 100+ 模型</li>
-          <li>按任务类型自动选模型</li>
-          <li>成本/质量/延迟三维优化</li>
-          <li>自动 Fallback 降级</li>
-        </ul>
-      </div>
-      <div>
-        <h5 style="color:var(--green);font-size:13px;margin-bottom:8px">租户级管控</h5>
-        <ul>
-          <li>按租户限流（QPS/Token）</li>
-          <li>用量计量与计费</li>
-          <li>模型白名单控制</li>
-          <li>API Key 管理</li>
-        </ul>
-      </div>
-      <div>
-        <h5 style="color:var(--orange);font-size:13px;margin-bottom:8px">安全与合规</h5>
-        <ul>
-          <li>Prompt 注入检测</li>
-          <li>输出内容审核</li>
-          <li>敏感信息脱敏</li>
-          <li>审计日志</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+<!-- ========== 总体架构 ========== -->
+<div id="overview" class="view-panel active">
+<h2 style="font-size:1.4rem;color:var(--text);margin-bottom:20px"><i class="ri ri-stack-line" style="color:var(--accent-blue)"></i> 总体架构 · 四层分层</h2>
+<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:32px">
+<div style="background:linear-gradient(135deg,rgba(88,166,255,0.15),rgba(139,92,246,0.15));border:1px solid rgba(88,166,255,0.3);border-radius:12px;padding:20px">
+<span class="layer-label" style="color:var(--accent-blue)">接入层 · Access Layer</span>
+<div style="color:var(--text-secondary);font-size:0.9rem">开放 API · SDK · Webhook · MCP Protocol · CLI 工具</div>
+</div>
+<div style="background:linear-gradient(135deg,rgba(63,185,80,0.15),rgba(59,130,246,0.15));border:1px solid rgba(63,185,80,0.3);border-radius:12px;padding:20px">
+<span class="layer-label" style="color:var(--accent-green)">能力层 · Capability Layer</span>
+<div style="color:var(--text-secondary);font-size:0.9rem">意图识别 · RAG 知识引擎 · 记忆系统 · 工具调用 · DAG 编排 · 多 Agent 协作</div>
+</div>
+<div style="background:linear-gradient(135deg,rgba(210,153,34,0.15),rgba(248,81,73,0.15));border:1px solid rgba(210,153,34,0.3);border-radius:12px;padding:20px">
+<span class="layer-label" style="color:var(--accent-orange)">运行时层 · Runtime Layer</span>
+<div style="color:var(--text-secondary);font-size:0.9rem">Agent Registry · 路由分发 · 会话管理 · 沙箱隔离 · 容错重试 · 限流熔断</div>
+</div>
+<div style="background:linear-gradient(135deg,rgba(248,81,73,0.15),rgba(139,92,246,0.15));border:1px solid rgba(248,81,73,0.3);border-radius:12px;padding:20px">
+<span class="layer-label" style="color:var(--accent-red)">基础设施层 · Infrastructure Layer</span>
+<div style="color:var(--text-secondary);font-size:0.9rem">PostgreSQL · Redis · Elasticsearch · Kafka · MinIO · Kubernetes</div>
+</div>
+</div>
+<h2 style="font-size:1.4rem;color:var(--text);margin-bottom:20px"><i class="ri ri-git-branch-line" style="color:var(--accent-green)"></i> SaaS 整体模式 vs 子产品独立模式</h2>
+<div class="grid-2">
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-green);margin-bottom:12px"><i class="ri ri-cloud-line"></i> SaaS 整体模式</h3>
+<p style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">四层能力完整集成在一个平台实例中，数据完全打通。适合需要一站式解决方案的中大型企业客户。统一控制台、统一计费、统一用户体系。</p>
+</div>
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-purple);margin-bottom:12px"><i class="ri ri-puzzle-line"></i> 子产品独立模式</h3>
+<p style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">四大能力面拆分为独立子产品，可单独部署、独立计费。客户按需选配，通过 Kafka 事件总线实现跨产品数据同步。适合模块化采购场景。</p>
+</div>
+</div>
 </div>
 
-<!-- ==================== 3. 部署架构 ==================== -->
-<div class="section" id="s2">
-  <h2>部署架构</h2>
-  <p class="desc">SaaS 模式与子产品模式的部署架构差异。SaaS 共享基础设施，子产品可独立部署。</p>
-
-  <div class="grid2">
-    <div class="card">
-      <h4><span class="tag tag-blue">SaaS 部署</span> 多租户共享</h4>
-      <div class="svg-wrap">
-        <svg viewBox="0 0 500 320" width="100%">
-          <rect x="10" y="10" width="480" height="300" rx="10" fill="none" stroke="#30363d"/>
-          <text x="25" y="30" fill="#8b949e" font-size="11">SaaS 集群 (多区域)</text>
-          <rect x="25" y="42" width="450" height="50" rx="8" fill="#161b22" stroke="#58a6ff"/>
-          <text x="250" y="62" fill="#58a6ff" font-size="11" text-anchor="middle">Global LB + CDN</text>
-          <text x="250" y="80" fill="#8b949e" font-size="9" text-anchor="middle">Cloudflare / AWS CloudFront</text>
-          <rect x="25" y="105" width="215" height="90" rx="8" fill="#161b22" stroke="#3fb950"/>
-          <text x="132" y="125" fill="#3fb950" font-size="10" text-anchor="middle">K8S 集群 (Region A)</text>
-          <text x="132" y="145" fill="#e6edf3" font-size="9" text-anchor="middle">Namespace: tenant-001</text>
-          <text x="132" y="160" fill="#e6edf3" font-size="9" text-anchor="middle">Namespace: tenant-002</text>
-          <text x="132" y="175" fill="#e6edf3" font-size="9" text-anchor="middle">Namespace: tenant-003</text>
-          <rect x="260" y="105" width="215" height="90" rx="8" fill="#161b22" stroke="#3fb950"/>
-          <text x="367" y="125" fill="#3fb950" font-size="10" text-anchor="middle">K8S 集群 (Region B)</text>
-          <text x="367" y="145" fill="#e6edf3" font-size="9" text-anchor="middle">Namespace: tenant-101</text>
-          <text x="367" y="160" fill="#e6edf3" font-size="9" text-anchor="middle">Namespace: tenant-102</text>
-          <text x="367" y="175" fill="#8b949e" font-size="9" text-anchor="middle">弹性伸缩</text>
-          <rect x="25" y="210" width="450" height="90" rx="8" fill="#161b22" stroke="#f0883e"/>
-          <text x="250" y="230" fill="#f0883e" font-size="10" text-anchor="middle">共享基础设施层</text>
-          <text x="120" y="255" fill="#e6edf3" font-size="9" text-anchor="middle">LLM Gateway (共享)</text>
-          <text x="250" y="255" fill="#e6edf3" font-size="9" text-anchor="middle">Milvus (NS隔离)</text>
-          <text x="380" y="255" fill="#e6edf3" font-size="9" text-anchor="middle">Redis Cluster</text>
-          <text x="120" y="280" fill="#e6edf3" font-size="9" text-anchor="middle">PostgreSQL (Schema隔离)</text>
-          <text x="250" y="280" fill="#e6edf3" font-size="9" text-anchor="middle">Kafka</text>
-          <text x="380" y="280" fill="#e6edf3" font-size="9" text-anchor="middle">MinIO (Bucket隔离)</text>
-        </svg>
-      </div>
-      <ul>
-        <li><strong>Namespace 隔离</strong>：每个租户独立 K8S Namespace</li>
-        <li><strong>共享 LLM Gateway</strong>：按租户限流和计量</li>
-        <li><strong>多区域部署</strong>：就近接入，低延迟</li>
-        <li><strong>弹性伸缩</strong>：HPA + VPA 自动扩缩</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h4><span class="tag tag-green">子产品部署</span> 独立交付</h4>
-      <div class="svg-wrap">
-        <svg viewBox="0 0 500 320" width="100%">
-          <rect x="10" y="10" width="480" height="300" rx="10" fill="none" stroke="#30363d"/>
-          <text x="25" y="30" fill="#8b949e" font-size="11">独立集群 (客户机房 / 私有云)</text>
-          <rect x="25" y="42" width="220" height="80" rx="8" fill="#161b22" stroke="#58a6ff"/>
-          <text x="135" y="62" fill="#58a6ff" font-size="10" text-anchor="middle">子产品实例</text>
-          <text x="135" y="80" fill="#e6edf3" font-size="9" text-anchor="middle">Helm Chart 一键安装</text>
-          <text x="135" y="95" fill="#e6edf3" font-size="9" text-anchor="middle">支持离线部署 (Air-Gap)</text>
-          <text x="135" y="110" fill="#8b949e" font-size="9" text-anchor="middle">可白标 · 独立域名</text>
-          <rect x="260" y="42" width="220" height="80" rx="8" fill="#161b22" stroke="#bc8cff"/>
-          <text x="370" y="62" fill="#bc8cff" font-size="10" text-anchor="middle">可选：本地模型推理</text>
-          <text x="370" y="80" fill="#e6edf3" font-size="9" text-anchor="middle">vLLM / Ollama / TGI</text>
-          <text x="370" y="95" fill="#e6edf3" font-size="9" text-anchor="middle">支持昇腾 NPU / A100</text>
-          <text x="370" y="110" fill="#8b949e" font-size="9" text-anchor="middle">数据不出机房</text>
-          <rect x="25" y="135" width="455" height="170" rx="8" fill="#161b22" stroke="#f0883e"/>
-          <text x="250" y="155" fill="#f0883e" font-size="10" text-anchor="middle">独立数据层</text>
-          <text x="120" y="180" fill="#e6edf3" font-size="9" text-anchor="middle">独立 PostgreSQL</text>
-          <text x="250" y="180" fill="#e6edf3" font-size="9" text-anchor="middle">独立 Redis</text>
-          <text x="380" y="180" fill="#e6edf3" font-size="9" text-anchor="middle">独立 Milvus</text>
-          <text x="120" y="205" fill="#e6edf3" font-size="9" text-anchor="middle">独立 MinIO</text>
-          <text x="250" y="205" fill="#e6edf3" font-size="9" text-anchor="middle">独立 Kafka</text>
-          <text x="380" y="205" fill="#e6edf3" font-size="9" text-anchor="middle">独立 ES</text>
-          <text x="250" y="240" fill="#8b949e" font-size="10" text-anchor="middle">物理隔离 · 数据不出域</text>
-          <text x="250" y="260" fill="#8b949e" font-size="10" text-anchor="middle">License 激活 · 独立升级</text>
-          <text x="250" y="280" fill="#8b949e" font-size="10" text-anchor="middle">可对接外部 LLM / 本地模型</text>
-        </svg>
-      </div>
-      <ul>
-        <li><strong>Helm Chart</strong>：一条命令安装完整子产品</li>
-        <li><strong>Air-Gap</strong>：支持离线环境部署</li>
-        <li><strong>本地模型</strong>：可对接 vLLM/Ollama，数据不出域</li>
-        <li><strong>白标</strong>：可替换 Logo、域名、配色</li>
-      </ul>
-    </div>
-  </div>
+<!-- ========== 技术架构 ========== -->
+<div id="tech" class="view-panel">
+<h2 style="font-size:1.4rem;color:var(--text);margin-bottom:20px"><i class="ri ri-settings-3-line" style="color:var(--accent-blue)"></i> 技术架构 · 六层技术栈</h2>
+<div class="card" style="padding:0;overflow:hidden">
+<table>
+<thead><tr><th style="width:80px">层级</th><th>技术组件</th><th style="width:180px">选型理由</th></tr></thead>
+<tbody>
+<tr><td style="color:var(--accent-blue);font-weight:600">前端</td><td>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(59,130,246,0.15)">⚛️</div><div><div class="tech-name">Vue 3 + TypeScript</div><div class="tech-desc">Composition API + 类型安全，团队技术栈统一</div></div></div>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(139,92,246,0.15)">⚡</div><div><div class="tech-name">Vite + Element Plus</div><div class="tech-desc">极速构建 + 企业级 UI 组件库</div></div></div>
+</td><td style="color:var(--text-secondary);font-size:0.85rem">国内团队主流选型，生态成熟</td></tr>
+<tr><td style="color:var(--accent-green);font-weight:600">后端</td><td>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(63,185,80,0.15)">☕</div><div><div class="tech-name">Java 17 + Spring Cloud</div><div class="tech-desc">微服务架构、服务注册发现、配置中心（运行/评测/生态平台）</div></div></div>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(59,130,246,0.15)">🐍</div><div><div class="tech-name">Python + FastAPI</div><div class="tech-desc">元数据驱动、模型解析、流程执行引擎（低代码平台）</div></div></div>
+</td><td style="color:var(--text-secondary);font-size:0.85rem">Java 稳定性 + Python 灵活性</td></tr>
+<tr><td style="color:var(--accent-orange);font-weight:600">AI 引擎</td><td>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(210,153,34,0.15)">🧠</div><div><div class="tech-name">LangChain / LlamaIndex</div><div class="tech-desc">RAG 管道、工具链编排、记忆管理</div></div></div>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(248,81,73,0.15)">🔗</div><div><div class="tech-name">DAG 引擎（自研）</div><div class="tech-desc">多 Agent 协作流程编排、任务依赖图执行</div></div></div>
+</td><td style="color:var(--text-secondary);font-size:0.85rem">框架 + 自研结合</td></tr>
+<tr><td style="color:var(--accent-purple);font-weight:600">数据</td><td>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(139,92,246,0.15)">🐘</div><div><div class="tech-name">PostgreSQL + pgvector</div><div class="tech-desc">关系数据 + 向量检索一体化</div></div></div>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(248,81,73,0.15)">🔴</div><div><div class="tech-name">Redis + Elasticsearch</div><div class="tech-desc">缓存/会话 + 全文检索/日志</div></div></div>
+</td><td style="color:var(--text-secondary);font-size:0.85rem">成熟稳定、社区活跃</td></tr>
+<tr><td style="color:var(--accent-red);font-weight:600">消息</td><td>
+<div class="tech-item"><div class="tech-icon" style="background:rgba(248,81,73,0.15)">📨</div><div><div class="tech-name">Apache Kafka</div><div class="tech-desc">事件驱动、异步解耦、子产品间数据总线</div></div></div>
+</td><td style="color:var(--text-secondary);font-size:0.85rem">高吞吐、持久化、Exactly-Once</td></tr>
+<tr><td style="color:var(--accent-blue);font-weight:600">运维</td><td>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(88,166,255,0.15)">☸️</div><div><div class="tech-name">Kubernetes + Helm</div><div class="tech-desc">容器编排、弹性伸缩、多租户隔离</div></div></div>
+<div class="tech-item" style="margin-bottom:8px"><div class="tech-icon" style="background:rgba(63,185,80,0.15)">📊</div><div><div class="tech-name">Prometheus + Grafana</div><div class="tech-desc">指标采集、告警规则、可视化大盘</div></div></div>
+</td><td style="color:var(--text-secondary);font-size:0.85rem">云原生标准栈</td></tr>
+</tbody>
+</table>
+</div>
 </div>
 
-<!-- ==================== 4. 功能架构 ==================== -->
-<div class="section" id="s3">
-  <h2>功能架构</h2>
-  <p class="desc">四大能力域的完整功能清单，标注优先级和所属子产品。</p>
-
-  <div class="grid2">
-    <div class="card">
-      <h4>🛠 智能体开发面 <span class="tag tag-blue">AgentDev Studio</span></h4>
-      <table>
-        <tr><th>模块</th><th>核心功能</th><th>P</th></tr>
-        <tr><td>低代码编排</td><td>可视化 Flow 编辑器、拖拽节点、模板库、一键部署</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>高代码 SDK</td><td>Python/JS SDK、本地开发服务器、热重载、Debug 工具</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>Harness 工程</td><td>Prompt 版本管理、A/B 测试、自动优化、Prompt 模板库</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>意图识别</td><td>NLU Pipeline、意图分类、实体抽取、上下文槽填充</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>记忆管理</td><td>短期(Context Window)、长期(Vector DB)、工作记忆、压缩</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>知识库</td><td>文档上传、分块策略、Embedding、混合检索、父子索引</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>工作流引擎</td><td>DAG 执行、条件分支、循环、并行、错误处理</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>多模态</td><td>文本/图像/语音/视频输入输出</td><td><span class="tag tag-blue">P2</span></td></tr>
-      </table>
-    </div>
-    <div class="card">
-      <h4>⚙️ 智能体运行面 <span class="tag tag-green">AgentRuntime</span></h4>
-      <table>
-        <tr><th>模块</th><th>核心功能</th><th>P</th></tr>
-        <tr><td>Agent Registry</td><td>服务注册、健康检查、版本管理、灰度发布</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>服务发现</td><td>DNS 发现、标签发现、能力发现</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>路由</td><td>意图路由、负载均衡、Failover、熔断</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>会话管理</td><td>多轮状态、上下文窗口管理、会话持久化</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>沙箱</td><td>代码执行沙箱、工具调用隔离、资源限制</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>Guardrails</td><td>安全护栏、合规检查、限流、内容审核</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>工具编排</td><td>工具注册、动态发现、MCP 协议适配</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>多 Agent 协作</td><td>编排者-执行者、流水线、民主协作</td><td><span class="tag tag-blue">P2</span></td></tr>
-      </table>
-    </div>
-    <div class="card">
-      <h4>📊 智能体评测面 <span class="tag tag-orange">AgentEval</span></h4>
-      <table>
-        <tr><th>模块</th><th>核心功能</th><th>P</th></tr>
-        <tr><td>Benchmark</td><td>预置评测集、自定义指标、回归测试</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>A/B Testing</td><td>流量分桶、统计显著性、优胜选择</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>质量监控</td><td>实时指标、异常检测、告警规则</td><td><span class="tag tag-red" style="background:rgba(248,81,73,.15);color:var(--red)">P0</span></td></tr>
-        <tr><td>人工评测</td><td>标注界面、一致性检验、Gold Standard</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>回归测试</td><td>版本对比、自动回滚、变更影响分析</td><td><span class="tag tag-blue">P2</span></td></tr>
-        <tr><td>评测报告</td><td>Dashboard、趋势分析、导出报告</td><td><span class="tag tag-orange">P1</span></td></tr>
-      </table>
-    </div>
-    <div class="card">
-      <h4>🌐 智能体生态面 <span class="tag tag-purple">AgentEco</span></h4>
-      <table>
-        <tr><th>模块</th><th>核心功能</th><th>P</th></tr>
-        <tr><td>Skill Store</td><td>Skill CRUD、版本管理、依赖解析、评分</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>插件管理</td><td>插件生命周期、权限沙箱、热重载、市场</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>模板市场</td><td>Agent 模板、Workflow 模板、行业方案</td><td><span class="tag tag-blue">P2</span></td></tr>
-        <tr><td>开发者门户</td><td>API 文档、SDK 下载、示例代码、Changelog</td><td><span class="tag tag-orange">P1</span></td></tr>
-        <tr><td>社区</td><td>论坛、知识库、案例分享、最佳实践</td><td><span class="tag tag-blue">P2</span></td></tr>
-        <tr><td>行业方案</td><td>金融/医疗/教育/电商预置方案</td><td><span class="tag tag-blue">P2</span></td></tr>
-      </table>
-    </div>
-  </div>
+<!-- ========== 部署架构 ========== -->
+<div id="deploy" class="view-panel">
+<h2 style="font-size:1.4rem;color:var(--text);margin-bottom:20px"><i class="ri ri-cloud-line" style="color:var(--accent-blue)"></i> 部署架构 · 双模式拓扑</h2>
+<div class="grid-2">
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-green);margin-bottom:16px"><i class="ri ri-server-line"></i> SaaS 多租户部署</h3>
+<div style="background:var(--bg);border-radius:8px;padding:16px;font-family:monospace;font-size:0.8rem;line-height:1.8;color:var(--text-secondary)">
+<pre style="white-space:pre-wrap">
+┌─────────────────────────────────────────┐
+│           Ingress / Nginx               │
+│      (SSL终止, 路由分发, 限流)           │
+├────────┬────────┬────────┬───────────────┤
+│ Agent  │ Agent  │ Agent  │   Agent       │
+│ Dev    │ Runtime│ Eval   │   Eco         │
+│ Studio │        │        │               │
+├────────┴────────┴────────┴───────────────┤
+│         Kafka 事件总线 (跨产品同步)      │
+├────────┬────────┬────────┬───────────────┤
+│Postgres│ Redis  │  ES    │   MinIO       │
+│(共享)  │ (共享) │(共享)  │  (共享)       │
+└────────┴────────┴────────┴───────────────┘
+</pre>
+</div>
+</div>
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-purple);margin-bottom:16px"><i class="ri ri-computer-line"></i> 子产品独立部署</h3>
+<div style="background:var(--bg);border-radius:8px;padding:16px;font-family:monospace;font-size:0.8rem;line-height:1.8;color:var(--text-secondary)">
+<pre style="white-space:pre-wrap">
+┌──────────────────┐ ┌──────────────────┐
+│  AgentDev Studio │ │  AgentRuntime    │
+│  ┌────────────┐  │ │  ┌────────────┐  │
+│  │ ai-lcap-   │  │ │  │ ai-arp-    │  │
+│  │ Server     │  │ │  │ Server     │  │
+│  ├────────────┤  │ │  ├────────────┤  │
+│  │ ai-lcap-   │  │ │  │ ai-arp-    │  │
+│  │ web        │  │ │  │ web        │  │
+│  ├────────────┤  │ │  ├────────────┤  │
+│  │ PG+Redis   │  │ │  │ PG+Redis   │  │
+│  └────────────┘  │ │  └────────────┘  │
+└──────────────────┘ └──────────────────┘
+        ↕ Kafka事件总线 ↕
+┌──────────────────┐ ┌──────────────────┐
+│  AgentEval       │ │  AgentEco        │
+│  ┌────────────┐  │ │  ┌────────────┐  │
+│  │ ai-aep-    │  │ │  │ ai-aeco-   │  │
+│  │ Server     │  │ │  │ Server     │  │
+│  ├────────────┤  │ │  ├────────────┤  │
+│  │ ai-aep-    │  │ │  │ ai-aeco-   │  │
+│  │ web        │  │ │  │ web        │  │
+│  ├────────────┤  │ │  ├────────────┤  │
+│  │ PG+Redis   │  │ │  │ PG+Redis   │  │
+│  └────────────┘  │ │  └────────────┘  │
+└──────────────────┘ └──────────────────┘
+</pre>
+</div>
+</div>
+</div>
 </div>
 
-<!-- ==================== 5. 子产品拆分 ==================== -->
-<div class="section" id="s4">
-  <h2>子产品拆分方案</h2>
-  <p class="desc">将中台四大能力域拆分为四个独立子产品，每个子产品可独立销售、独立部署、独立计费。</p>
-
-  <div class="grid2" style="margin-bottom:24px">
-    <div class="product-card full">
-      <h4>🏢 AgentForge Platform <span class="tag tag-cyan">完整中台</span></h4>
-      <p style="font-size:13px;color:var(--dim);margin:8px 0">包含全部四个子产品，数据完全打通，统一控制台，统一体验。</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-        <span class="tag tag-blue">AgentDev Studio</span>
-        <span class="tag tag-green">AgentRuntime</span>
-        <span class="tag tag-orange">AgentEval</span>
-        <span class="tag tag-purple">AgentEco</span>
-      </div>
-      <div class="price">💰 按用量统一计费（API调用 + 计算 + 存储），年付折扣</div>
-    </div>
-  </div>
-
-  <div class="grid4">
-    <div class="product-card dev">
-      <h4>🛠 AgentDev Studio</h4>
-      <p style="font-size:12px;color:var(--dim)">智能体开发平台</p>
-      <ul style="font-size:12px;margin-top:8px">
-        <li>低代码编排器</li>
-        <li>高代码 SDK</li>
-        <li>Harness 工程</li>
-        <li>意图识别引擎</li>
-        <li>记忆管理</li>
-        <li>知识库 RAG</li>
-        <li>工作流引擎</li>
-      </ul>
-      <div class="price">💰 按 Agent 数 + 调用量计费</div>
-    </div>
-    <div class="product-card run">
-      <h4>⚙️ AgentRuntime</h4>
-      <p style="font-size:12px;color:var(--dim)">智能体运行平台</p>
-      <ul style="font-size:12px;margin-top:8px">
-        <li>Agent Registry</li>
-        <li>服务发现</li>
-        <li>路由/负载均衡</li>
-        <li>会话管理</li>
-        <li>沙箱执行</li>
-        <li>Guardrails</li>
-        <li>多 Agent 协作</li>
-      </ul>
-      <div class="price">💰 按实例数 + 调用量计费</div>
-    </div>
-    <div class="product-card eval">
-      <h4>📊 AgentEval</h4>
-      <p style="font-size:12px;color:var(--dim)">智能体评测平台</p>
-      <ul style="font-size:12px;margin-top:8px">
-        <li>Benchmark Suite</li>
-        <li>A/B Testing</li>
-        <li>质量监控</li>
-        <li>人工评测</li>
-        <li>回归测试</li>
-        <li>评测报告</li>
-      </ul>
-      <div class="price">💰 按评测次数 + 存储计费</div>
-    </div>
-    <div class="product-card eco">
-      <h4>🌐 AgentEco</h4>
-      <p style="font-size:12px;color:var(--dim)">智能体生态平台</p>
-      <ul style="font-size:12px;margin-top:8px">
-        <li>Skill Store</li>
-        <li>插件管理</li>
-        <li>模板市场</li>
-        <li>开发者门户</li>
-        <li>社区论坛</li>
-        <li>行业方案</li>
-      </ul>
-      <div class="price">💰 免费基础版 + Pro 订阅</div>
-    </div>
-  </div>
-
-  <h3>子产品间数据流与集成</h3>
-  <div class="card">
-    <div class="svg-wrap">
-      <svg viewBox="0 0 800 280" width="100%" style="max-width:800px">
-        <!-- 四个子产品 -->
-        <rect x="20" y="20" width="160" height="100" rx="10" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
-        <text x="100" y="50" fill="#58a6ff" font-size="12" text-anchor="middle" font-weight="600">AgentDev Studio</text>
-        <text x="100" y="70" fill="#8b949e" font-size="10" text-anchor="middle">开发 · 编排 · RAG</text>
-        <text x="100" y="100" fill="#8b949e" font-size="9" text-anchor="middle">→ 输出 Agent 包</text>
-
-        <rect x="220" y="20" width="160" height="100" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
-        <text x="300" y="50" fill="#3fb950" font-size="12" text-anchor="middle" font-weight="600">AgentRuntime</text>
-        <text x="300" y="70" fill="#8b949e" font-size="10" text-anchor="middle">运行 · 路由 · 沙箱</text>
-        <text x="300" y="100" fill="#8b949e" font-size="9" text-anchor="middle">→ 输出运行指标</text>
-
-        <rect x="420" y="20" width="160" height="100" rx="10" fill="#161b22" stroke="#f0883e" stroke-width="1.5"/>
-        <text x="500" y="50" fill="#f0883e" font-size="12" text-anchor="middle" font-weight="600">AgentEval</text>
-        <text x="500" y="70" fill="#8b949e" font-size="10" text-anchor="middle">评测 · 监控 · A/B</text>
-        <text x="500" y="100" fill="#8b949e" font-size="9" text-anchor="middle">→ 输出评测报告</text>
-
-        <rect x="620" y="20" width="160" height="100" rx="10" fill="#161b22" stroke="#bc8cff" stroke-width="1.5"/>
-        <text x="700" y="50" fill="#bc8cff" font-size="12" text-anchor="middle" font-weight="600">AgentEco</text>
-        <text x="700" y="70" fill="#8b949e" font-size="10" text-anchor="middle">Skill · 插件 · 模板</text>
-        <text x="700" y="100" fill="#8b949e" font-size="9" text-anchor="middle">→ 输出可复用资产</text>
-
-        <!-- 事件总线 -->
-        <rect x="80" y="160" width="640" height="40" rx="8" fill="#21262d" stroke="#f0883e" stroke-width="1"/>
-        <text x="400" y="185" fill="#f0883e" font-size="12" text-anchor="middle" font-weight="600">📡 事件总线 (Kafka / EventBridge) — 标准化事件协议</text>
-
-        <!-- 连接线 -->
-        <line x1="100" y1="120" x2="100" y2="160" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>
-        <line x1="300" y1="120" x2="300" y2="160" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>
-        <line x1="500" y1="120" x2="500" y2="160" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>
-        <line x1="700" y1="120" x2="700" y2="160" stroke="#30363d" stroke-width="1.5" marker-end="url(#ah)"/>
-
-        <!-- 说明 -->
-        <text x="400" y="225" fill="#8b949e" font-size="10" text-anchor="middle">子产品间通过事件总线解耦，可独立部署、独立升级、独立计费</text>
-        <text x="400" y="245" fill="#8b949e" font-size="10" text-anchor="middle">SaaS 模式下数据完全打通；子产品模式下按需订阅事件</text>
-        <text x="400" y="265" fill="#58a6ff" font-size="10" text-anchor="middle">统一 API Gateway 对外暴露标准化接口 (REST + gRPC + MCP)</text>
-      </svg>
-    </div>
-  </div>
-
-  <h3>子产品独立交付清单</h3>
-  <div class="card">
-    <table>
-      <tr><th>子产品</th><th>独立入口</th><th>独立数据库</th><th>独立计费</th><th>可独立部署</th><th>可白标</th><th>Helm Chart</th></tr>
-      <tr><td>AgentDev Studio</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td><code>agentforge-dev</code></td></tr>
-      <tr><td>AgentRuntime</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td><code>agentforge-runtime</code></td></tr>
-      <tr><td>AgentEval</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td><code>agentforge-eval</code></td></tr>
-      <tr><td>AgentEco</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td><code>agentforge-eco</code></td></tr>
-      <tr><td style="color:var(--cyan)">AgentForge Platform</td><td>✅ 统一</td><td>✅ 共享</td><td>✅ 统一</td><td>✅</td><td>✅</td><td><code>agentforge-platform</code></td></tr>
-    </table>
-  </div>
+<!-- ========== 功能架构 ========== -->
+<div id="function" class="view-panel">
+<h2 style="font-size:1.4rem;color:var(--text);margin-bottom:20px"><i class="ri ri-list-check" style="color:var(--accent-blue)"></i> 功能架构 · 四大能力面 × 22 模块</h2>
+<div style="display:flex;flex-direction:column;gap:16px">
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-blue);margin-bottom:12px"><i class="ri ri-code-s-slash-line"></i> AgentDev Studio · 开发平台（6 模块）</h3>
+<table><thead><tr><th>模块</th><th>核心能力</th><th style="width:60px">优先级</th></tr></thead>
+<tbody>
+<tr><td>低代码编排</td><td style="color:var(--text-secondary)">可视化拖拽、表单设计器、流程画布、元数据驱动</td><td><span style="background:rgba(248,81,73,0.15);color:#f85149;padding:2px 8px;border-radius:4px;font-size:0.8rem">P0</span></td></tr>
+<tr><td>高代码 SDK</td><td style="color:var(--text-secondary)">Python/Java SDK、本地开发调试、热重载</td><td><span style="background:rgba(248,81,73,0.15);color:#f85149;padding:2px 8px;border-radius:4px;font-size:0.8rem">P0</span></td></tr>
+<tr><td>Harness</td><td style="color:var(--text-secondary)">Agent 生命周期管理、版本控制、灰度发布</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>意图识别</td><td style="color:var(--text-secondary)">多意图拆解、槽位填充、上下文消歧</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>记忆系统</td><td style="color:var(--text-secondary)">短期/长期记忆、记忆检索、遗忘策略</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>RAG 引擎</td><td style="color:var(--text-secondary)">文档切片、向量索引、混合检索、重排序</td><td><span style="background:rgba(248,81,73,0.15);color:#f85149;padding:2px 8px;border-radius:4px;font-size:0.8rem">P0</span></td></tr>
+</tbody></table>
+</div>
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-green);margin-bottom:12px"><i class="ri ri-play-circle-line"></i> AgentRuntime · 运行平台（6 模块）</h3>
+<table><thead><tr><th>模块</th><th>核心能力</th><th style="width:60px">优先级</th></tr></thead>
+<tbody>
+<tr><td>Agent Registry</td><td style="color:var(--text-secondary)">注册发现、健康检查、版本管理</td><td><span style="background:rgba(248,81,73,0.15);color:#f85149;padding:2px 8px;border-radius:4px;font-size:0.8rem">P0</span></td></tr>
+<tr><td>路由分发</td><td style="color:var(--text-secondary)">意图路由、负载均衡、A/B 分流</td><td><span style="background:rgba(248,81,73,0.15);color:#f85149;padding:2px 8px;border-radius:4px;font-size:0.8rem">P0</span></td></tr>
+<tr><td>会话管理</td><td style="color:var(--text-secondary)">多轮对话状态、上下文窗口、会话持久化</td><td><span style="background:rgba(248,81,73,0.15);color:#f85149;padding:2px 8px;border-radius:4px;font-size:0.8rem">P0</span></td></tr>
+<tr><td>沙箱隔离</td><td style="color:var(--text-secondary)">代码执行沙箱、资源限制、安全隔离</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>Guardrails</td><td style="color:var(--text-secondary)">输入输出校验、内容安全、合规过滤</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>多 Agent 协作</td><td style="color:var(--text-secondary)">DAG 编排执行、Agent 间消息传递、结果聚合</td><td><span style="background:rgba(139,92,246,0.15);color:#8b5cf6;padding:2px 8px;border-radius:4px;font-size:0.8rem">P2</span></td></tr>
+</tbody></table>
+</div>
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-orange);margin-bottom:12px"><i class="ri ri-line-chart-line"></i> AgentEval · 评测平台（5 模块）</h3>
+<table><thead><tr><th>模块</th><th>核心能力</th><th style="width:60px">优先级</th></tr></thead>
+<tbody>
+<tr><td>Benchmark 引擎</td><td style="color:var(--text-secondary)">标准评测集、自定义评测、多维评分</td><td><span style="background:rgba(248,81,73,0.15);color:#f85149;padding:2px 8px;border-radius:4px;font-size:0.8rem">P0</span></td></tr>
+<tr><td>A/B Testing</td><td style="color:var(--text-secondary)">流量分割、统计显著性、版本对比</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>质量监控</td><td style="color:var(--text-secondary)">实时指标、异常检测、告警通知</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>人工评测</td><td style="color:var(--text-secondary)">标注任务分发、评测员管理、一致性校验</td><td><span style="background:rgba(139,92,246,0.15);color:#8b5cf6;padding:2px 8px;border-radius:4px;font-size:0.8rem">P2</span></td></tr>
+<tr><td>回归测试</td><td style="color:var(--text-secondary)">版本回归、CI/CD 集成、门禁卡点</td><td><span style="background:rgba(139,92,246,0.15);color:#8b5cf6;padding:2px 8px;border-radius:4px;font-size:0.8rem">P2</span></td></tr>
+</tbody></table>
+</div>
+<div class="card">
+<h3 style="font-size:1rem;color:var(--accent-purple);margin-bottom:12px"><i class="ri ri-store-2-line"></i> AgentEco · 生态平台（5 模块）</h3>
+<table><thead><tr><th>模块</th><th>核心能力</th><th style="width:60px">优先级</th></tr></thead>
+<tbody>
+<tr><td>Skill Store</td><td style="color:var(--text-secondary)">Skill 注册/发现/安装、版本管理、依赖解析</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>插件市场</td><td style="color:var(--text-secondary)">第三方插件接入、权限沙箱、审核流程</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>模板中心</td><td style="color:var(--text-secondary)">行业模板、场景模板、一键部署</td><td><span style="background:rgba(139,92,246,0.15);color:#8b5cf6;padding:2px 8px;border-radius:4px;font-size:0.8rem">P2</span></td></tr>
+<tr><td>开发者门户</td><td style="color:var(--text-secondary)">API 文档、SDK 下载、沙箱调试</td><td><span style="background:rgba(210,153,34,0.15);color:#d29922;padding:2px 8px;border-radius:4px;font-size:0.8rem">P1</span></td></tr>
+<tr><td>社区</td><td style="color:var(--text-secondary)">问答、分享、排行榜、贡献激励</td><td><span style="background:rgba(139,92,246,0.15);color:#8b5cf6;padding:2px 8px;border-radius:4px;font-size:0.8rem">P2</span></td></tr>
+</tbody></table>
+</div>
+</div>
 </div>
 
+<!-- ========== 子产品拆分 ========== -->
+<div id="subproduct" class="view-panel">
+<h2 style="font-size:1.4rem;color:var(--text);margin-bottom:20px"><i class="ri ri-puzzle-line" style="color:var(--accent-blue)"></i> 子产品拆分 · 四大独立产品</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+<div class="card" style="border-left:3px solid var(--accent-blue)">
+<h3 style="font-size:1rem;color:var(--accent-blue);margin-bottom:8px">🛠 AgentDev Studio</h3>
+<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">低代码 + 高代码开发平台</p>
+<div style="font-size:0.8rem;color:var(--text-muted)">低代码编排 · 高代码 SDK · Harness · 意图识别 · 记忆 · RAG · DAG</div>
+</div>
+<div class="card" style="border-left:3px solid var(--accent-green)">
+<h3 style="font-size:1rem;color:var(--accent-green);margin-bottom:8px">⚙️ AgentRuntime</h3>
+<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">Agent 运行时管理平台</p>
+<div style="font-size:0.8rem;color:var(--text-muted)">Registry · 发现 · 路由 · 会话 · 沙箱 · Guardrails · 多 Agent</div>
+</div>
+<div class="card" style="border-left:3px solid var(--accent-orange)">
+<h3 style="font-size:1rem;color:var(--accent-orange);margin-bottom:8px">📊 AgentEval</h3>
+<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">质量评测与监控平台</p>
+<div style="font-size:0.8rem;color:var(--text-muted)">Benchmark · A/B Testing · 质量监控 · 人工评测 · 回归测试</div>
+</div>
+<div class="card" style="border-left:3px solid var(--accent-purple)">
+<h3 style="font-size:1rem;color:var(--accent-purple);margin-bottom:8px">🌐 AgentEco</h3>
+<p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">开发者生态与市场平台</p>
+<div style="font-size:0.8rem;color:var(--text-muted)">Skill Store · 插件市场 · 模板中心 · 开发者门户 · 社区</div>
+</div>
+</div>
+
+<h2 style="font-size:1.4rem;color:var(--text);margin:32px 0 20px"><i class="ri ri-file-code-line" style="color:var(--accent-blue)"></i> 工程命名规范</h2>
+<p style="color:var(--text-secondary);margin-bottom:16px;font-size:0.9rem">
+统一命名规则：<code>ai-{子产品缩写}-Server</code>（后端）/ <code>ai-{子产品缩写}-web</code>（前端）
+</p>
+
+<!-- 低代码平台 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+<span style="font-size:1.5rem">🛠</span>
+<span style="font-size:1.1rem;font-weight:600;color:var(--text)">低代码平台 · AgentDev Studio</span>
+</div>
+<div class="grid-2">
+<div style="background:rgba(0,194,255,0.05);border:1px solid rgba(0,194,255,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-server-line" style="color:var(--accent-blue)"></i>
+<span style="font-weight:600;color:var(--accent-blue);font-size:0.95rem">ai-lcap-Server</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>低代码平台的服务端核心引擎。基于 Python 构建，提供元数据驱动、模型解析、流程执行能力。负责数据处理与逻辑运算。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>Python &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Python &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>Python</div>
+</div>
+</div>
+<div style="background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-window-line" style="color:var(--accent-purple)"></i>
+<span style="font-weight:600;color:var(--accent-purple);font-size:0.95rem">ai-lcap-web</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>低代码平台的 Web 控制台与设计器。基于 Vue 3 + TypeScript + Element Plus + Vite 构建，提供可视化拖拽编排、表单设计与流程画布能力。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>TypeScript &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Node.js &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>TypeScript</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 运行平台 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+<span style="font-size:1.5rem">⚙️</span>
+<span style="font-size:1.1rem;font-weight:600;color:var(--text)">运行平台 · AgentRuntime</span>
+</div>
+<div class="grid-2">
+<div style="background:rgba(0,194,255,0.05);border:1px solid rgba(0,194,255,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-server-line" style="color:var(--accent-blue)"></i>
+<span style="font-weight:600;color:var(--accent-blue);font-size:0.95rem">ai-arp-Server</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>Agent 运行平台的服务端核心引擎。基于 Java + Spring Cloud 构建，提供 Agent 注册发现、会话管理、沙箱隔离、路由分发能力。承载 Agent 全生命周期运行时态管理。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>Java &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Maven &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>Java</div>
+</div>
+</div>
+<div style="background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-window-line" style="color:var(--accent-purple)"></i>
+<span style="font-weight:600;color:var(--accent-purple);font-size:0.95rem">ai-arp-web</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>Agent 运行平台的 Web 控制台。基于 Vue 3 + TypeScript + Element Plus + Vite 构建，提供 Agent 运行监控、会话管理、实例状态大盘与配置管理能力。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>TypeScript &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Node.js &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>TypeScript</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 评测平台 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+<span style="font-size:1.5rem">📊</span>
+<span style="font-size:1.1rem;font-weight:600;color:var(--text)">评测平台 · AgentEval</span>
+</div>
+<div class="grid-2">
+<div style="background:rgba(0,194,255,0.05);border:1px solid rgba(0,194,255,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-server-line" style="color:var(--accent-blue)"></i>
+<span style="font-weight:600;color:var(--accent-blue);font-size:0.95rem">ai-aep-Server</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>Agent 评测平台的服务端核心引擎。基于 Java + Spring Cloud 构建，提供 Benchmark 引擎、A/B 测试调度、质量指标采集与分析能力。负责评测任务编排与结果聚合。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>Java &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Maven &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>Java</div>
+</div>
+</div>
+<div style="background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-window-line" style="color:var(--accent-purple)"></i>
+<span style="font-weight:600;color:var(--accent-purple);font-size:0.95rem">ai-aep-web</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>Agent 评测平台的 Web 控制台。基于 Vue 3 + TypeScript + Element Plus + Vite 构建，提供评测任务管理、结果看板、对比分析图表与评测报告生成能力。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>TypeScript &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Node.js &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>TypeScript</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 生态平台 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+<span style="font-size:1.5rem">🌐</span>
+<span style="font-size:1.1rem;font-weight:600;color:var(--text)">生态平台 · AgentEco</span>
+</div>
+<div class="grid-2">
+<div style="background:rgba(0,194,255,0.05);border:1px solid rgba(0,194,255,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-server-line" style="color:var(--accent-blue)"></i>
+<span style="font-weight:600;color:var(--accent-blue);font-size:0.95rem">ai-aeco-Server</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>Agent 生态平台的服务端核心引擎。基于 Java + Spring Cloud 构建，提供 Skill 市场、插件管理、模板引擎、开发者门户与社区运营能力。负责生态资源的注册、检索与分发。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>Java &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Maven &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>Java</div>
+</div>
+</div>
+<div style="background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:8px;padding:16px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<i class="ri ri-window-line" style="color:var(--accent-purple)"></i>
+<span style="font-weight:600;color:var(--accent-purple);font-size:0.95rem">ai-aeco-web</span>
+</div>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.6">
+<div style="margin-bottom:6px"><strong>描述：</strong>Agent 生态平台的 Web 门户。基于 Vue 3 + TypeScript + Element Plus + Vite 构建，提供 Skill 市场浏览、插件安装配置、模板推荐与开发者工作台能力。</div>
+<div><strong style="color:var(--accent-green)">构建语言：</strong>TypeScript &nbsp;|&nbsp; <strong style="color:var(--accent-orange)">编译构建：</strong>Node.js &nbsp;|&nbsp; <strong style="color:var(--accent-purple)">仓库语言：</strong>TypeScript</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- 汇总表 -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:24px">
+<h3 style="font-size:1rem;color:var(--text);margin-bottom:16px"><i class="ri ri-table-line" style="color:var(--accent-blue)"></i> 工程命名汇总</h3>
+<table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+<thead>
+<tr style="border-bottom:1px solid var(--border)">
+<th style="padding:10px;text-align:left;color:var(--text-muted)">子产品</th>
+<th style="padding:10px;text-align:left;color:var(--text-muted)">后端工程名</th>
+<th style="padding:10px;text-align:left;color:var(--text-muted)">前端工程名</th>
+<th style="padding:10px;text-align:center;color:var(--text-muted)">后端语言</th>
+<th style="padding:10px;text-align:center;color:var(--text-muted)">前端语言</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-bottom:1px solid var(--border-soft)">
+<td style="padding:10px;color:var(--text)">🛠 低代码平台</td>
+<td style="padding:10px;color:var(--accent-blue);font-weight:600">ai-lcap-Server</td>
+<td style="padding:10px;color:var(--accent-purple);font-weight:600">ai-lcap-web</td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(59,130,246,0.15);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:0.8rem">Python</span></td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(139,92,246,0.15);color:#a78bfa;padding:2px 8px;border-radius:4px;font-size:0.8rem">TypeScript</span></td>
+</tr>
+<tr style="border-bottom:1px solid var(--border-soft)">
+<td style="padding:10px;color:var(--text)">⚙️ 运行平台</td>
+<td style="padding:10px;color:var(--accent-blue);font-weight:600">ai-arp-Server</td>
+<td style="padding:10px;color:var(--accent-purple);font-weight:600">ai-arp-web</td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(234,88,12,0.15);color:#fb923c;padding:2px 8px;border-radius:4px;font-size:0.8rem">Java</span></td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(139,92,246,0.15);color:#a78bfa;padding:2px 8px;border-radius:4px;font-size:0.8rem">TypeScript</span></td>
+</tr>
+<tr style="border-bottom:1px solid var(--border-soft)">
+<td style="padding:10px;color:var(--text)">📊 评测平台</td>
+<td style="padding:10px;color:var(--accent-blue);font-weight:600">ai-aep-Server</td>
+<td style="padding:10px;color:var(--accent-purple);font-weight:600">ai-aep-web</td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(234,88,12,0.15);color:#fb923c;padding:2px 8px;border-radius:4px;font-size:0.8rem">Java</span></td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(139,92,246,0.15);color:#a78bfa;padding:2px 8px;border-radius:4px;font-size:0.8rem">TypeScript</span></td>
+</tr>
+<tr>
+<td style="padding:10px;color:var(--text)">🌐 生态平台</td>
+<td style="padding:10px;color:var(--accent-blue);font-weight:600">ai-aeco-Server</td>
+<td style="padding:10px;color:var(--accent-purple);font-weight:600">ai-aeco-web</td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(234,88,12,0.15);color:#fb923c;padding:2px 8px;border-radius:4px;font-size:0.8rem">Java</span></td>
+<td style="padding:10px;text-align:center"><span style="background:rgba(139,92,246,0.15);color:#a78bfa;padding:2px 8px;border-radius:4px;font-size:0.8rem">TypeScript</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<!-- 命名规则说明 -->
+<div style="background:rgba(0,194,255,0.05);border:1px solid rgba(0,194,255,0.15);border-radius:8px;padding:16px;margin-top:16px">
+<h4 style="color:var(--accent-blue);font-size:0.9rem;margin-bottom:8px"><i class="ri ri-information-line"></i> 命名规则</h4>
+<div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.8">
+<div>• <strong>统一前缀：</strong><code>ai-</code> 表示 AgentForge 平台体系</div>
+<div>• <strong>后端后缀：</strong><code>-Server</code>（大写 S，Java Maven 工程规范）</div>
+<div>• <strong>前端后缀：</strong><code>-web</code>（小写，npm 包名规范）</div>
+<div>• <strong>缩写取自英文全称：</strong>lcap = Low-Code Application Platform, arp = Agent Runtime Platform, aep = Agent Evaluation Platform, aeco = Agent Ecosystem Platform</div>
+</div>
+</div>
+
+<h2 style="font-size:1.4rem;color:var(--text);margin:32px 0 20px"><i class="ri ri-calendar-line" style="color:var(--accent-orange)"></i> 70 天交付清单</h2>
+<div class="card">
+<table>
+<thead><tr><th>阶段</th><th>时间</th><th>交付物</th><th>里程碑</th></tr></thead>
+<tbody>
+<tr><td style="color:var(--accent-blue);font-weight:600">P0</td><td>第 1-4 周</td><td style="color:var(--text-secondary)">低代码引擎 + 运行时核心 + RAG + 评测基础</td><td>最小可用产品</td></tr>
+<tr><td style="color:var(--accent-green);font-weight:600">P1</td><td>第 5-7 周</td><td style="color:var(--text-secondary)">Harness + 意图识别 + 记忆 + 沙箱 + A/B + Skill Store</td><td>功能完备</td></tr>
+<tr><td style="color:var(--accent-purple);font-weight:600">P2</td><td>第 8-10 周</td><td style="color:var(--text-secondary)">多 Agent 协作 + 人工评测 + 模板中心 + 社区 + 生态平台</td><td>生态就绪</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
 <script>
-function show(i){
-  document.querySelectorAll('.section').forEach((s,j)=>{
-    s.classList.toggle('active',j===i);
-  });
-  document.querySelectorAll('.tab').forEach((t,j)=>{
-    t.classList.toggle('active',j===i);
-  });
-}
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.view).classList.add('active');
+    });
+});
 </script>
 </body>
 </html>
